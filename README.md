@@ -2,6 +2,10 @@
 
 An automated student feedback collection and processing system built with React and n8n. Students submit feedback through a web form, and the system automatically stores responses in Google Sheets and sends conditional email replies based on the rating.
 
+
+<img width="456" height="621" alt="Screenshot 2026-07-24 141717" src="https://github.com/user-attachments/assets/8b73abc0-f5dd-4905-bc0d-8dc2d04dca30" />
+
+
 ## Project Scenario
 
 A training company wants to automate the way they collect and manage student feedback. This system provides:
