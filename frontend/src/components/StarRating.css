@@ -1,14 +1,14 @@
 .star-rating {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 0;
+  gap: 4px;
+  padding: 4px 0;
 }
 
 .star {
   background: none;
   border: none;
-  font-size: 1.75rem;
+  font-size: 1.4rem;
   color: #ccc;
   cursor: pointer;
   transition: color 0.15s, transform 0.15s;
@@ -25,8 +25,8 @@
 }
 
 .star-label {
-  margin-left: 8px;
-  font-size: 0.8rem;
+  margin-left: 6px;
+  font-size: 0.72rem;
   color: #999;
   font-weight: 500;
 }
