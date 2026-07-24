@@ -1,24 +1,26 @@
 .app {
-  background: #0a0a0a;
-  border: 1px solid #222;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
   padding: 48px 40px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .app-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 36px;
 }
 
 .app-header h1 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.5px;
+  color: #111;
+  letter-spacing: -0.3px;
   margin-bottom: 6px;
 }
 
 .app-header p {
-  color: #666;
+  color: #888;
   font-size: 0.9rem;
   font-weight: 400;
 }
