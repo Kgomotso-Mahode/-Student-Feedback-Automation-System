@@ -2,21 +2,103 @@
 
 An automated student feedback collection and processing system built with React and n8n. Students submit feedback through a web form, and the system automatically stores responses in Google Sheets and sends conditional email replies based on the rating.
 
-## Architecture
+## Project Scenario
+
+A training company wants to automate the way they collect and manage student feedback. This system provides:
+- A front-end feedback form (React)
+- An n8n workflow that processes submissions
+- Automated email notifications based on feedback ratings
+
+## n8n Workflow
 
 ```
-React Frontend (Vite)          n8n Workflow
-┌──────────────────┐          ┌─────────────────────────┐
-│  Feedback Form    │  POST    │  Webhook (/feedback)     │
-│  - Student Name   │ ──────> │  Validate Data           │
-│  - Email          │         │  Set Server Data         │
-│  - Course Name    │         │  Store in Google Sheets  │
-│  - Star Rating    │         │  Rating <= 2?            │
-│  - Message        │  JSON   │    Yes → Email (Concern) │
-│                   │ <────── │    No  → Email (Thanks)  │
-└──────────────────┘         │  Success Response        │
-                              └─────────────────────────┘
+                           ┌──────────────────────┐
+                           │   Receive Feedback    │
+                           │   (POST /webhook/     │
+                           │    feedback)           │
+                           └──────────┬───────────┘
+                                      │
+                           ┌──────────▼───────────┐
+                           │     Validate Data     │
+                           │  (Check all fields    │
+                           │   are present)        │
+                           └──┬────────────────┬──┘
+                    (valid)   │                │  (invalid)
+                              │                │
+                 ┌────────────▼──┐     ┌───────▼──────────┐
+                 │ Set Server    │     │ Invalid - 400     │
+                 │ Data          │     │ Response           │
+                 │ (timestamp +  │     │ { success: false } │
+                 │  status tag)  │     └───────────────────┘
+                 └────────┬──────┘
+                          │
+              ┌───────────▼───────────┐
+              │  Store in Google      │
+              │  Sheets               │
+              │  (Append feedback     │
+              │   row to spreadsheet) │
+              └───────────┬───────────┘
+                          │
+              ┌───────────▼───────────┐
+              │    Rating <= 2?       │
+              │  (Conditional check)  │
+              └───┬───────────────┬───┘
+           (Yes)  │               │  (No)
+                  │               │
+     ┌────────────▼──┐   ┌───────▼────────────┐
+     │ Email -       │   │ Email -             │
+     │ Needs         │   │ Positive            │
+     │ Attention     │   │ Response            │
+     │ (Concern      │   │ (Thank-you          │
+     │  response)    │   │  email)             │
+     └───────┬───────┘   └───────┬─────────────┘
+             │                   │
+             └───────┬───────────┘
+                     │
+          ┌──────────▼──────────┐
+          │  Success - 200      │
+          │  Response            │
+          │ { success: true }    │
+          └─────────────────────┘
 ```
+
+### Workflow Nodes
+
+| # | Node | Type | Description |
+|---|------|------|-------------|
+| 1 | Receive Feedback | Webhook | POST endpoint at `/webhook/feedback` that receives student data |
+| 2 | Validate Data | If | Checks all 5 required fields are present and valid |
+| 3 | Invalid - 400 Response | Respond to Webhook | Returns error JSON with HTTP 400 for bad submissions |
+| 4 | Set Server Data | Set | Generates server-side `submittedAt` timestamp and `status` tag |
+| 5 | Store in Google Sheets | Google Sheets | Appends feedback row with all fields + timestamp + status |
+| 6 | Rating <= 2? | If | Branches email response based on rating value |
+| 7 | Email - Needs Attention | SMTP Email | Sends empathetic response for low ratings (1-2) |
+| 8 | Email - Positive Response | SMTP Email | Sends thank-you email for high ratings (3-5) |
+| 9 | Success - 200 Response | Respond to Webhook | Returns success JSON with HTTP 200 |
+
+### Conditional Logic
+
+| Rating | Status Tag | Email Sent |
+|--------|-----------|------------|
+| 1-2 | Needs Attention | Concern response - team will follow up |
+| 3-5 | Positive | Thank-you message celebrating feedback |
+
+## Front-End Application
+
+### Required Fields
+- Student Name (text)
+- Email Address (email, regex validated)
+- Course Name (text)
+- Rating (1-5 star selector)
+- Feedback Message (textarea, min 10 characters)
+- Submit Button (with loading state)
+
+### Features
+- Clean glassmorphism dark-theme design
+- Responsive layout (desktop + mobile)
+- Client-side validation with per-field error messages
+- Fetch API submission to n8n webhook
+- Success and error status banners
 
 ## Prerequisites
 
@@ -87,35 +169,26 @@ VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook/feedback
 ## Project Structure
 
 ```
-├── frontend/                  # React frontend
-│   ├── src/
-│   │   ├── App.jsx            # Root component
-│   │   ├── App.css            # App styles
-│   │   ├── index.css           # Global styles
-│   │   └── components/
-│   │       ├── FeedbackForm.jsx    # Main form with validation
-│   │       ├── FeedbackForm.css    # Form styles
-│   │       ├── StarRating.jsx      # Interactive star rating
-│   │       └── StarRating.css      # Star rating styles
-│   ├── vite.config.js         # Vite config with proxy
-│   └── package.json
-├── n8n-workflow.json          # n8n automation workflow
+├── frontend/                      # React frontend
+│   ├── index.html                 # HTML entry point
+│   ├── package.json               # Dependencies (React 18, Vite 6)
+│   ├── vite.config.js             # Vite config with n8n proxy
+│   ├── .env.example               # Environment template
+│   └── src/
+│       ├── main.jsx               # React entry point
+│       ├── App.jsx                # Root component
+│       ├── App.css                # Glassmorphism card styles
+│       ├── index.css              # Global dark gradient theme
+│       └── components/
+│           ├── FeedbackForm.jsx   # Main form with validation
+│           ├── FeedbackForm.css   # Form styles + responsive
+│           ├── StarRating.jsx     # Interactive 1-5 star rating
+│           └── StarRating.css     # Star hover/active styles
+├── n8n-workflow.json              # n8n workflow (import into n8n)
+├── package.json                   # Root scripts (dev, build, n8n)
 ├── .gitignore
 └── README.md
 ```
-
-## Workflow Nodes
-
-| Node | Description |
-|------|-------------|
-| Receive Feedback | Webhook endpoint receiving POST data |
-| Validate Data | Checks all required fields are present |
-| Set Server Data | Generates server-side timestamp and status |
-| Store in Google Sheets | Appends feedback row to spreadsheet |
-| Rating <= 2? | Branches based on rating value |
-| Email - Needs Attention | Sends concern response for low ratings |
-| Email - Positive Response | Sends thank-you for high ratings |
-| Success/Invalid Response | Returns JSON response to frontend |
 
 ## License
 
