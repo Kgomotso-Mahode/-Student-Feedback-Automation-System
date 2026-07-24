@@ -94,7 +94,7 @@ A training company wants to automate the way they collect and manage student fee
 - Submit Button (with loading state)
 
 ### Features
-- Clean glassmorphism dark-theme design
+- Clean black and white minimalist design
 - Responsive layout (desktop + mobile)
 - Client-side validation with per-field error messages
 - Fetch API submission to n8n webhook
@@ -107,9 +107,23 @@ A training company wants to automate the way they collect and manage student fee
 - Google Cloud project with Sheets API enabled
 - SMTP server credentials (Gmail, SendGrid, etc.)
 
-## Setup
+## How to Run
 
-### 1. Frontend
+You need **two terminals** running at the same time - one for the n8n backend, one for the React frontend.
+
+### Terminal 1: Start n8n Backend
+
+```bash
+# Install n8n globally (only needed once)
+npm install -g n8n
+
+# Start n8n
+n8n start
+```
+
+n8n runs on `http://localhost:5678`. You will see a login/setup screen on first run.
+
+### Terminal 2: Start React Frontend
 
 ```bash
 cd frontend
@@ -117,54 +131,44 @@ npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:5173` and proxies webhook requests to n8n.
+The frontend runs on `http://localhost:5173`.
 
-### 2. n8n Backend
+### Import the n8n Workflow
 
-```bash
-n8n start
-```
+1. Open `http://localhost:5678` in your browser
+2. Complete the n8n setup wizard if it's your first time
+3. Click **Workflows** in the sidebar
+4. Click **Import from File** (or press `Ctrl+O`)
+5. Select `n8n-workflow.json` from the project root
+6. Click **Activate** to enable the workflow
 
-n8n runs on `http://localhost:5678`.
+### Configure Credentials
 
-### 3. Import Workflow
-
-1. Open n8n at `http://localhost:5678`
-2. Go to **Workflows > Import from File**
-3. Select `n8n-workflow.json` from the project root
-
-### 4. Configure Credentials
-
-In n8n, create two credentials:
+Before the workflow can store data and send emails, you need to set up credentials in n8n.
 
 **Google Sheets OAuth2:**
 1. Create a Google Cloud project with Sheets API enabled
-2. Create OAuth2 credentials
+2. Create OAuth2 credentials in Google Cloud Console
 3. In n8n, go to **Credentials > New > Google Sheets OAuth2**
-4. Enter your Client ID and Secret
-5. Update the **Store in Google Sheets** node with the new credential
+4. Enter your Client ID and Client Secret
+5. Open the **Store in Google Sheets** node and select your new credential
 
-**SMTP:**
+**SMTP (Email):**
 1. In n8n, go to **Credentials > New > SMTP**
-2. Enter your SMTP server details (host, port, user, password)
-3. Update both email nodes with the new credential
+2. Enter your SMTP details:
+   - Host: `smtp.gmail.com` (for Gmail)
+   - Port: `465`
+   - User: your email
+   - Password: your app password
+3. Open both email nodes and select your SMTP credential
 
-### 5. Google Sheet
+### Test It
 
-Create a Google Sheet with these columns in Row 1:
-
-| Student Name | Email | Course Name | Rating | Feedback Message | Submitted At | Status |
-|---|---|---|---|---|---|---|
-
-Use the Document ID in the workflow's **Store in Google Sheets** node.
-
-## Environment Variables
-
-Create `frontend/.env`:
-
-```
-VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook/feedback
-```
+1. Make sure both n8n and the frontend are running
+2. Open `http://localhost:5173` in your browser
+3. Fill in the form and submit
+4. Check your Google Sheet for the new row
+5. Check email for the automated response
 
 ## Project Structure
 
@@ -177,8 +181,8 @@ VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook/feedback
 │   └── src/
 │       ├── main.jsx               # React entry point
 │       ├── App.jsx                # Root component
-│       ├── App.css                # Glassmorphism card styles
-│       ├── index.css              # Global dark gradient theme
+│       ├── App.css                # Card styles
+│       ├── index.css              # Global styles
 │       └── components/
 │           ├── FeedbackForm.jsx   # Main form with validation
 │           ├── FeedbackForm.css   # Form styles + responsive

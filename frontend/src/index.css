@@ -7,17 +7,18 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+  background: #000;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  color: #e0e0e0;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
   width: 100%;
-  max-width: 600px;
+  max-width: 520px;
 }
