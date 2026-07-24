@@ -197,7 +197,3 @@ Before the workflow can store data and send emails, you need to set up credentia
 ├── .gitignore
 └── README.md
 ```
-
-## License
-
-MIT
