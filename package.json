@@ -1,0 +1,16 @@
+{
+  "name": "kgomotso-mahode-student-feedback-auto-system",
+  "version": "1.0.0",
+  "description": "Automated student feedback collection and processing system built with React and n8n",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "n8n": "n8n start",
+    "setup": "cd frontend && npm install"
+  },
+  "keywords": ["feedback", "n8n", "automation", "react"],
+  "author": "Kgomotso Mahode",
+  "license": "MIT"
+}

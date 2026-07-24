@@ -1,0 +1,32 @@
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.star {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #4a4a6a;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.star:hover {
+  transform: scale(1.15);
+}
+
+.star-active {
+  color: #ffc107;
+}
+
+.star-label {
+  margin-left: 10px;
+  font-size: 0.85rem;
+  color: #9a9abf;
+  font-weight: 500;
+}

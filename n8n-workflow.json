@@ -1,0 +1,348 @@
+{
+  "name": "Student Feedback Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feedback",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-receive",
+      "name": "Receive Feedback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "webhookId": "feedback"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "validate-name",
+              "leftValue": "={{ $json.body.studentName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            },
+            {
+              "id": "validate-email",
+              "leftValue": "={{ $json.body.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            },
+            {
+              "id": "validate-course",
+              "leftValue": "={{ $json.body.courseName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            },
+            {
+              "id": "validate-rating",
+              "leftValue": "={{ $json.body.rating }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "validate-message",
+              "leftValue": "={{ $json.body.feedbackMessage }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "validate-data",
+      "name": "Validate Data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"message\": \"Missing or invalid required fields. Please check your submission.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "invalid-response",
+      "name": "Invalid - 400 Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [660, 480]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-submittedAt",
+              "name": "submittedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "set-status",
+              "name": "status",
+              "value": "={{ $('Receive Feedback').item.json.body.rating <= 2 ? 'Needs Attention' : 'Positive' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-server-data",
+      "name": "Set Server Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [560, 180]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "14nyMi7OILO_ADuCPxIme6Y435bcxLar5j2ps4jsU_GM",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Student Name": "={{ $('Receive Feedback').item.json.body.studentName }}",
+            "Email": "={{ $('Receive Feedback').item.json.body.email }}",
+            "Course Name": "={{ $('Receive Feedback').item.json.body.courseName }}",
+            "Rating": "={{ $('Receive Feedback').item.json.body.rating }}",
+            "Feedback Message": "={{ $('Receive Feedback').item.json.body.feedbackMessage }}",
+            "Submitted At": "={{ $json.submittedAt }}",
+            "Status": "={{ $json.status }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "store-google-sheets",
+      "name": "Store in Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [660, 180],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "low-rating",
+              "leftValue": "={{ $('Receive Feedback').item.json.body.rating }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-rating",
+      "name": "Rating <= 2?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 180]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Feedback').item.json.body.email }}",
+        "subject": "We received your feedback - Action Needed",
+        "emailType": "text",
+        "message": "Dear {{ $('Receive Feedback').item.json.body.studentName }},\n\nThank you for your feedback about {{ $('Receive Feedback').item.json.body.courseName }}.\n\nWe are sorry to hear that your experience was not satisfactory. Your feedback has been flagged for immediate review, and a member of our team will reach out to you shortly to address your concerns.\n\nWe truly value your input and are committed to improving our services.\n\nBest regards,\nTraining Team",
+        "options": {}
+      },
+      "id": "email-low-rating",
+      "name": "Email - Needs Attention",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1100, 80],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_SMTP_CREDENTIAL_ID",
+          "name": "SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Feedback').item.json.body.email }}",
+        "subject": "Thank you for your feedback!",
+        "emailType": "text",
+        "message": "Dear {{ $('Receive Feedback').item.json.body.studentName }},\n\nThank you for your feedback about {{ $('Receive Feedback').item.json.body.courseName }}.\n\nWe are thrilled to hear that you had a positive experience! Your kind words motivate us to keep delivering quality training.\n\nIf you have any further suggestions, please don't hesitate to share.\n\nBest regards,\nTraining Team",
+        "options": {}
+      },
+      "id": "email-high-rating",
+      "name": "Email - Positive Response",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1100, 280],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_SMTP_CREDENTIAL_ID",
+          "name": "SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Thank you for your feedback! Your response has been received successfully.\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "success-response",
+      "name": "Success - 200 Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1320, 180]
+    }
+  ],
+  "connections": {
+    "Receive Feedback": {
+      "main": [
+        [
+          {
+            "node": "Validate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Data": {
+      "main": [
+        [
+          {
+            "node": "Set Server Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid - 400 Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Server Data": {
+      "main": [
+        [
+          {
+            "node": "Store in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Rating <= 2?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rating <= 2?": {
+      "main": [
+        [
+          {
+            "node": "Email - Needs Attention",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email - Positive Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email - Needs Attention": {
+      "main": [
+        [
+          {
+            "node": "Success - 200 Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email - Positive Response": {
+      "main": [
+        [
+          {
+            "node": "Success - 200 Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "student-feedback-automation"
+  }
+}
